@@ -1,167 +1,64 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Empirical Formula Calculator</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f8f9fa;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
+<script>
+    const elements = [];
+    const stepsContainer = document.getElementById("steps");
+
+    function addElement() {
+        const element = document.getElementById("element").value.trim();
+        const percentage = parseFloat(document.getElementById("percentage").value);
+        const molarMass = parseFloat(document.getElementById("molarMass").value);
+
+        if (!element || isNaN(percentage) || isNaN(molarMass)) {
+            alert("Please fill in all fields correctly!");
+            return;
         }
 
-        h1 {
-            color: #2c3e50;
-        }
+        elements.push({ element, percentage, molarMass });
+        updateSteps();
+    }
 
-        .container {
-            background: #ffffff;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
-            padding: 20px;
-            max-width: 500px;
-            width: 90%;
-            margin: auto;
-        }
+    function updateSteps() {
+        stepsContainer.innerHTML = "";
 
-        .form-group {
-            margin-bottom: 15px;
-        }
+        const moleRatios = [];
 
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
+        // Step 1: Calculate Moles
+        const step1 = document.createElement("div");
+        step1.innerHTML = `<strong>Step 1:</strong> Calculate moles for each element.`;
+        elements.forEach(({ element, percentage, molarMass }) => {
+            const moles = (percentage / molarMass).toFixed(2);
+            moleRatios.push(parseFloat(moles));
+            step1.innerHTML += `<br>${element}: ${percentage} / ${molarMass} = ${moles} moles`;
+        });
+        stepsContainer.appendChild(step1);
 
-        input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
+        // Step 2: Normalize Mole Ratios
+        const smallestMole = Math.min(...moleRatios);
+        const normalized = moleRatios.map(moles => moles / smallestMole);
 
-        button {
-            background-color: #2980b9;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 10px;
-        }
+        // Check for fractional values (e.g., 0.5) and handle them
+        const needsAdjustment = normalized.some(ratio => (ratio % 1).toFixed(1) === "0.5");
+        const adjustedNormalized = needsAdjustment
+            ? normalized.map(ratio => ratio * 2)
+            : normalized;
 
-        button:hover {
-            background-color: #3498db;
-        }
+        const step2 = document.createElement("div");
+        step2.innerHTML = `<strong>Step 2:</strong> Normalize the mole ratios.<br>`;
+        adjustedNormalized.forEach((ratio, i) => {
+            const displayRatio = ratio.toFixed(1);
+            step2.innerHTML += `${elements[i].element}: ${moleRatios[i]} / ${smallestMole} = ${displayRatio}<br>`;
+        });
+        stepsContainer.appendChild(step2);
 
-        #steps {
-            margin-top: 20px;
-            font-size: 0.9rem;
-            color: #333;
-        }
+        // Step 3: Display Formula
+        const formula = adjustedNormalized
+            .map((ratio, i) => {
+                const roundedRatio = Math.round(ratio);
+                return roundedRatio === 1 ? elements[i].element : `${elements[i].element}${roundedRatio}`;
+            })
+            .join("");
 
-        #steps div {
-            background: #f1f1f1;
-            margin-bottom: 10px;
-            padding: 10px;
-            border-radius: 5px;
-        }
-
-        footer {
-            margin-top: 20px;
-            font-size: 0.8rem;
-            color: #888;
-        }
-    </style>
-</head>
-<body>
-    <h1>Empirical Formula Calculator</h1>
-    <div class="container">
-        <form id="formulaForm">
-            <div class="form-group">
-                <label for="element">Element:</label>
-                <input type="text" id="element" placeholder="Enter element symbol (e.g., C)" required>
-            </div>
-            <div class="form-group">
-                <label for="percentage">Percentage (%):</label>
-                <input type="number" id="percentage" step="0.01" placeholder="Enter percentage (e.g., 85.63)" required>
-            </div>
-            <div class="form-group">
-                <label for="molarMass">Molar Mass (g/mol):</label>
-                <input type="number" id="molarMass" step="0.01" placeholder="Enter molar mass (e.g., 12.01)" required>
-            </div>
-            <button type="button" onclick="addElement()">Add Element</button>
-        </form>
-
-        <div id="steps"></div>
-    </div>
-    <footer>Made with ❤️ for Chemistry Enthusiasts</footer>
-
-    <script>
-        const elements = [];
-        const stepsContainer = document.getElementById("steps");
-
-        function addElement() {
-            const element = document.getElementById("element").value.trim();
-            const percentage = parseFloat(document.getElementById("percentage").value);
-            const molarMass = parseFloat(document.getElementById("molarMass").value);
-
-            if (!element || isNaN(percentage) || isNaN(molarMass)) {
-                alert("Please fill in all fields correctly!");
-                return;
-            }
-
-            elements.push({ element, percentage, molarMass });
-            updateSteps();
-        }
-
-        function updateSteps() {
-            stepsContainer.innerHTML = "";
-
-            let totalMoles = 0;
-            const moleRatios = [];
-
-            // Step 1: Calculate Moles
-            const step1 = document.createElement("div");
-            step1.innerHTML = `<strong>Step 1:</strong> Calculate moles for each element.`;
-            elements.forEach(({ element, percentage, molarMass }) => {
-                const moles = (percentage / molarMass).toFixed(2);
-                moleRatios.push(moles);
-                totalMoles++;
-                step1.innerHTML += `<br>${element}: ${percentage} / ${molarMass} = ${moles} moles`;
-            });
-            stepsContainer.appendChild(step1);
-
-            // Step 2: Normalize Mole Ratios
-            const smallestMole = Math.min(...moleRatios);
-            const normalized = moleRatios.map(moles => (moles / smallestMole).toFixed(1));
-            const step2 = document.createElement("div");
-            step2.innerHTML = `<strong>Step 2:</strong> Normalize the mole ratios.<br>`;
-            normalized.forEach((ratio, i) => {
-                step2.innerHTML += `${elements[i].element}: ${moleRatios[i]} / ${smallestMole} = ${ratio}<br>`;
-            });
-            stepsContainer.appendChild(step2);
-
-            // Step 3: Display Formula
-            const formula = normalized
-                .map((ratio, i) => {
-                    const roundedRatio = Math.round(ratio);
-                    return roundedRatio === 1 ? elements[i].element : `${elements[i].element}${roundedRatio}`;
-                })
-                .join("");
-            const step3 = document.createElement("div");
-            step3.innerHTML = `<strong>Step 3:</strong> Empirical Formula: <strong>${formula}</strong>`;
-            stepsContainer.appendChild(step3);
-        }
-    </script>
-</body>
-</html>
+        const step3 = document.createElement("div");
+        step3.innerHTML = `<strong>Step 3:</strong> Empirical Formula: <strong>${formula}</strong>`;
+        stepsContainer.appendChild(step3);
+    }
+</script>
